@@ -1,0 +1,1 @@
+"""Flask platform routes package."""

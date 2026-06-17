@@ -1,0 +1,13 @@
+{
+  "name": "victim-bot",
+  "version": "1.0.0",
+  "description": "Juice Garden victim bot — Playwright headless browser automation",
+  "main": "src/bot.js",
+  "scripts": {
+    "start": "node src/bot.js"
+  },
+  "dependencies": {
+    "playwright": "1.40.0",
+    "axios": "^1.6.2"
+  }
+}

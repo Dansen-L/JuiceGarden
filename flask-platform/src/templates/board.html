@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Challenge Board — Juice Garden</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0D0F14;
+      --surface: #161A22;
+      --surface-raised: #1E2430;
+      --primary: #E8A838;
+      --secondary: #38C988;
+      --danger: #E84B38;
+      --text: #F0EDE8;
+      --text-secondary: #8A8F9A;
+      --border: #252C3A;
+    }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.65;
+    }
+
+    /* Navigation */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-brand {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .nav-right a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.15s;
+    }
+    .nav-right a:hover { color: var(--text); }
+    .points-chip {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.85rem;
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .auth-btn {
+      background: var(--primary);
+      color: #0D0F14;
+      border: none;
+      border-radius: 8px;
+      padding: 0.4rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .nav-avatar {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #0D0F14;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      text-decoration: none;
+    }
+    .nav-avatar:hover { opacity: 0.85; }
+
+    /* Main content */
+    .main-content { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+
+    /* Filter strip */
+    .filter-strip {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.9rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(232,168,56,0.1);
+    }
+    .filter-sep { width: 1px; height: 20px; background: var(--border); margin: 0 0.25rem; }
+
+    /* Challenge grid */
+    .challenge-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+    @media (max-width: 1100px) { .challenge-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 700px) { .challenge-grid { grid-template-columns: 1fr; } }
+
+    /* Challenge card */
+    .challenge-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.25rem 1.25rem 1.5rem;
+      cursor: pointer;
+      transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, border-left-color 0.15s ease-out;
+      border-left: 3px solid transparent;
+      position: relative;
+    }
+    .challenge-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      border-left-color: var(--primary);
+    }
+    .challenge-card.solved {
+      border-left: 3px solid var(--secondary);
+    }
+    .challenge-card.solved:hover {
+      border-left-color: var(--secondary);
+    }
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .track-pill {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .track-injection { background: #3D1A1A; color: #FF9B8F; }
+    .track-auth { background: #1A1F3D; color: #6088E8; }
+    .track-bac { background: #2D1A3D; color: #D4AAFF; }
+    .track-client_side { background: #3D341A; color: #E8A838; }
+    .track-server_side { background: #3D241A; color: #F07040; }
+    .track-business_logic { background: #1A3D34; color: #38C988; }
+    .track-mission { background: linear-gradient(135deg, #B8860B, #E8A838); color: #0D0F14; }
+    .difficulty-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+    }
+    .difficulty-moderate { background: #1A2A1A; color: #38C988; }
+    .difficulty-hard { background: #2A0F0F; color: #E84B38; }
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+    .card-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1rem;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+    .card-points { color: var(--primary); font-weight: 700; font-size: 0.95rem; }
+    .solved-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      color: var(--secondary);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .mission-card {
+      border: 1px solid rgba(232,168,56,0.3);
+      background: linear-gradient(135deg, var(--surface) 0%, rgba(184,134,11,0.05) 100%);
+    }
+
+    /* Slide-over panel */
+    .slide-over-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .slide-over-backdrop.open { opacity: 1; pointer-events: all; }
+    .slide-over {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: min(560px, 100vw);
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      z-index: 201;
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform 0.25s ease-out;
+      display: flex;
+      flex-direction: column;
+    }
+    .slide-over.open { transform: translateX(0); }
+    .slide-over-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      z-index: 1;
+    }
+    .slide-over-title { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 700; }
+    .close-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      border-radius: 8px;
+      width: 32px; height: 32px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .close-btn:hover { border-color: var(--primary); color: var(--text); }
+    .slide-over-body { padding: 1.5rem; flex: 1; }
+    .description-md { font-size: 0.9rem; line-height: 1.65; color: var(--text-secondary); }
+    .description-md h2 { font-family: 'Syne', sans-serif; color: var(--text); margin: 1rem 0 0.5rem; font-size: 1.1rem; }
+    .description-md p { margin-bottom: 0.75rem; }
+    .description-md code { font-family: 'JetBrains Mono', monospace; background: var(--bg); padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.82rem; color: var(--primary); }
+    .description-md pre { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; margin: 0.75rem 0; overflow-x: auto; }
+    .description-md pre code { background: transparent; padding: 0; color: var(--text); }
+    .description-md strong { color: var(--text); }
+    .description-md ul, .description-md ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+    .description-md li { margin-bottom: 0.25rem; }
+    .hints-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .hints-section h3 { font-family: 'Syne', sans-serif; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .hint-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 0.6rem 0.9rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      cursor: pointer;
+      margin-bottom: 0.5rem;
+      transition: all 0.15s;
+    }
+    .hint-btn:hover { border-color: var(--primary); }
+    .hint-btn.t2 { background: rgba(232,168,56,0.05); border-color: rgba(232,168,56,0.3); }
+    .hint-btn.t3 { background: rgba(232,168,56,0.08); border-color: rgba(232,168,56,0.5); animation: pulseBorder 2s infinite; }
+    @keyframes pulseBorder { 0%,100% { box-shadow: 0 0 0 0 rgba(232,168,56,0); } 50% { box-shadow: 0 0 0 4px rgba(232,168,56,0.15); } }
+    .hint-content { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; margin-top: 0.25rem; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; display: none; }
+    .hint-content.visible { display: block; }
+    .flag-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .flag-section h3 { font-family: 'Syne', sans-serif; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .flag-input-row { display: flex; gap: 0.5rem; }
+    .flag-input {
+      flex: 1;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1rem;
+      padding: 0.6rem 0.75rem;
+    }
+    .flag-input::placeholder { color: var(--text-secondary); }
+    .flag-input:focus { outline: none; border-color: var(--primary); }
+    .flag-input.correct { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(56,201,136,0.2); }
+    .flag-input.wrong { border-color: var(--danger); animation: shake 0.3s ease; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      14%,43%,71% { transform: translateX(-6px); }
+      29%,57%,86% { transform: translateX(6px); }
+    }
+    .submit-flag-btn {
+      background: var(--primary);
+      color: #0D0F14;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .flag-feedback { font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.2em; }
+    .flag-feedback.correct { color: var(--secondary); }
+    .flag-feedback.wrong { color: var(--danger); }
+    .solution-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .solution-section h3 { font-family: 'Syne', sans-serif; font-size: 0.9rem; color: var(--secondary); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--secondary);
+      color: #0D0F14;
+      border-radius: 10px;
+      padding: 0.75rem 1.25rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* Auth modal */
+    .modal-backdrop { position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;display:none;align-items:center;justify-content:center; }
+    .modal-backdrop.open { display:flex; }
+    .modal { background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;width:min(400px,90vw); }
+    .modal h2 { font-family:'Syne',sans-serif;margin-bottom:1.5rem; }
+    .form-group { margin-bottom:1rem; }
+    .form-group label { display:block;margin-bottom:0.35rem;font-size:0.85rem;color:var(--text-secondary); }
+    .form-control { width:100%;padding:0.6rem 0.75rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.95rem; }
+    .form-control:focus { outline:none;border-color:var(--primary); }
+    .modal-actions { display:flex;gap:0.5rem;margin-top:1.5rem;justify-content:flex-end; }
+    .btn { padding:0.5rem 1.1rem;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif; }
+    .btn-primary { background:var(--primary);color:#0D0F14; }
+    .btn-secondary { background:transparent;border:1px solid var(--border);color:var(--text); }
+
+    /* Page-level board heading */
+    .board-heading {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--text);
+      padding: 1.5rem 2rem 0;
+      margin: 0;
+    }
+
+    /* Focus visible */
+    :focus-visible { outline: 2px dashed var(--primary); outline-offset: 2px; }
+
+    /* Reduced motion — disable animations, transitions, AND transforms */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        transform: none !important;
+      }
+    }
+
+    /* Confetti */
+    .confetti-container {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 9999;
+      overflow: hidden;
+    }
+    .confetti-piece {
+      position: absolute;
+      top: -10px;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      animation: confettiFall linear forwards;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+      80% { opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Mission progress */
+    .mission-progress {
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    .mission-progress-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 0.25rem;
+      overflow: hidden;
+    }
+    .mission-progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/platform/" class="nav-brand">🥤 Juice Garden</a>
+    <div class="nav-right">
+      <a href="http://garden.lab" target="_blank">Garden Fresh</a>
+      <a href="/platform/scoreboard/">Scoreboard</a>
+      <a href="/platform/exploit-server/">Exploit Server</a>
+      {% if user.is_authenticated %}
+        <span class="points-chip">{{ user.total_points }} pts</span>
+        <a href="/platform/scoreboard/user/{{ user.username }}" class="nav-avatar" title="{{ user.username }}">{{ user.username[0] }}</a>
+        <button class="auth-btn" onclick="logout()">Sign Out</button>
+      {% else %}
+        <button class="auth-btn" onclick="openAuthModal('login')">Sign In / Register</button>
+      {% endif %}
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <!-- Page heading -->
+    <h1 class="board-heading">Challenge Board</h1>
+
+    <!-- Filter strip -->
+    <div class="filter-strip" role="toolbar" aria-label="Challenge filters">
+      <button class="filter-btn active" onclick="filterChallenges('all', this)">All</button>
+      <div class="filter-sep"></div>
+      <button class="filter-btn" onclick="filterChallenges('auth', this)">🔐 Auth</button>
+      <button class="filter-btn" onclick="filterChallenges('injection', this)">💉 Injection</button>
+      <button class="filter-btn" onclick="filterChallenges('bac', this)">🔓 Access Control</button>
+      <button class="filter-btn" onclick="filterChallenges('client_side', this)">🌐 Client-Side</button>
+      <button class="filter-btn" onclick="filterChallenges('server_side', this)">🖥️ Server-Side</button>
+      <button class="filter-btn" onclick="filterChallenges('business_logic', this)">⚙️ Business Logic</button>
+      <button class="filter-btn" onclick="filterChallenges('mission', this)">🎯 Mission</button>
+      <div class="filter-sep"></div>
+      <button class="filter-btn" onclick="filterChallenges('moderate', this)">Moderate</button>
+      <button class="filter-btn" onclick="filterChallenges('hard', this)">Hard</button>
+      <div class="filter-sep"></div>
+      <button class="filter-btn" onclick="filterChallenges('solved', this)">Solved</button>
+      <button class="filter-btn" onclick="filterChallenges('unsolved', this)">Unsolved</button>
+    </div>
+
+    <!-- Challenge grid -->
+    <div class="challenge-grid" id="challenge-grid">
+      {% for challenge in challenges %}
+      <div class="challenge-card {% if challenge.id in solved_ids %}solved{% endif %} {% if challenge.is_mission %}mission-card{% endif %}"
+           data-track="{{ challenge.track }}"
+           data-difficulty="{{ challenge.difficulty }}"
+           data-solved="{{ 'true' if challenge.id in solved_ids else 'false' }}"
+           onclick="openChallenge({{ challenge.id }})"
+           role="button"
+           tabindex="0"
+           onkeypress="if(event.key==='Enter')openChallenge({{ challenge.id }})"
+           aria-label="{{ challenge.code }}: {{ challenge.title }}">
+        <div class="card-header">
+          <span class="track-pill track-{{ challenge.track }}">
+            {{ challenge.track.replace('_', ' ').title() }}
+          </span>
+          <span class="difficulty-badge difficulty-{{ challenge.difficulty }}">{{ challenge.difficulty.title() }}</span>
+        </div>
+        <div class="card-title">{{ challenge.code }}: {{ challenge.title }}</div>
+        <div class="card-desc">{{ challenge.description_md[:200]|replace('#', '')|replace('*', '')|replace('`', '') }}</div>
+        <div class="card-footer">
+          <span class="card-points">{{ challenge.points }} pts</span>
+          {% if challenge.id in solved_ids %}
+          <span class="solved-badge">✓ Solved</span>
+          {% else %}
+          <span>{{ challenge.solves.count() }} solve{{ 's' if challenge.solves.count() != 1 }}</span>
+          {% endif %}
+        </div>
+        {% if challenge.is_mission and not challenge.id in solved_ids %}
+        <div class="mission-progress" id="mission-progress-{{ challenge.id }}">
+          <span class="mission-steps-label">Prerequisites: checking...</span>
+          <div class="mission-progress-bar"><div class="mission-progress-fill" style="width:0%"></div></div>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Slide-over backdrop and panel -->
+  <div class="slide-over-backdrop" id="slide-backdrop" onclick="closeSlideOver()"></div>
+  <div class="slide-over" id="slide-over" role="dialog" aria-modal="true" aria-labelledby="slide-title">
+    <div class="slide-over-header">
+      <div>
+        <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.5rem;">
+          <span class="track-pill" id="slide-track-pill"></span>
+          <span class="difficulty-badge" id="slide-difficulty-badge"></span>
+        </div>
+        <div class="slide-over-title" id="slide-title">Challenge details</div>
+      </div>
+      <button class="close-btn" onclick="closeSlideOver()" aria-label="Close">×</button>
+    </div>
+    <div class="slide-over-body">
+      <div class="description-md" id="slide-description"></div>
+      <div class="hints-section" id="hints-section">
+        <h3>Hints</h3>
+        <div id="hints-container"></div>
+      </div>
+      <div class="flag-section" id="flag-section">
+        <h3>Submit Flag</h3>
+        <div class="flag-input-row">
+          <input type="text" class="flag-input" id="flag-input" placeholder="JG{...}"
+                 onkeypress="if(event.key==='Enter')submitFlag()">
+          <button class="submit-flag-btn" onclick="submitFlag()">Submit</button>
+        </div>
+        <div class="flag-feedback" id="flag-feedback"></div>
+      </div>
+      <div class="solution-section" id="solution-section" style="display:none;">
+        <h3>✓ Solution Notes</h3>
+        <div class="description-md" id="solution-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="alert"></div>
+
+  <!-- Auth Modal -->
+  <div class="modal-backdrop" id="auth-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+      <h2 id="auth-modal-title">Sign In</h2>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" class="form-control" id="auth-username" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" class="form-control" id="auth-password" autocomplete="current-password" onkeypress="if(event.key==='Enter')doAuth()">
+      </div>
+      <div id="auth-error" style="color:var(--danger);font-size:0.85rem;margin-top:0.5rem;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeAuthModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="doAuth()" id="auth-submit-btn">Sign In</button>
+        <button class="btn btn-secondary" onclick="toggleAuthMode()" id="auth-toggle-btn">Register instead</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentChallengeId = null;
+    let currentPurchasedHints = [];
+    let authMode = 'login';
+
+    // Filter challenges
+    function filterChallenges(filter, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.challenge-card').forEach(card => {
+        let show = true;
+        if (filter === 'all') show = true;
+        else if (['auth','injection','bac','client_side','server_side','business_logic','mission'].includes(filter))
+          show = card.dataset.track === filter;
+        else if (['moderate','hard'].includes(filter))
+          show = card.dataset.difficulty === filter;
+        else if (filter === 'solved') show = card.dataset.solved === 'true';
+        else if (filter === 'unsolved') show = card.dataset.solved === 'false';
+        card.style.display = show ? '' : 'none';
+      });
+    }
+
+    // Open challenge slide-over
+    function openChallenge(id) {
+      currentChallengeId = id;
+      fetch('/platform/challenge/' + id)
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('slide-title').textContent = data.code + ': ' + data.title;
+
+          const trackPill = document.getElementById('slide-track-pill');
+          trackPill.textContent = data.track.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+          trackPill.className = 'track-pill track-' + data.track;
+
+          const diffBadge = document.getElementById('slide-difficulty-badge');
+          diffBadge.textContent = data.difficulty.charAt(0).toUpperCase() + data.difficulty.slice(1);
+          diffBadge.className = 'difficulty-badge difficulty-' + data.difficulty;
+
+          // Render description (simple markdown)
+          document.getElementById('slide-description').innerHTML = renderMd(data.description_md);
+
+          // Render hints
+          currentPurchasedHints = data.purchased_hints || [];
+          renderHints(data, currentPurchasedHints);
+
+          // Solution notes if solved
+          if (data.solved && data.solution_notes) {
+            document.getElementById('solution-section').style.display = '';
+            document.getElementById('solution-content').innerHTML = renderMd(data.solution_notes);
+          } else {
+            document.getElementById('solution-section').style.display = 'none';
+          }
+
+          // Clear flag input
+          const fi = document.getElementById('flag-input');
+          fi.value = '';
+          fi.className = 'flag-input';
+          document.getElementById('flag-feedback').textContent = '';
+          document.getElementById('flag-feedback').className = 'flag-feedback';
+
+          openSlideOver();
+        });
+    }
+
+    function renderHints(data, purchased) {
+      const container = document.getElementById('hints-container');
+      const costs = data.hint_costs || {};
+      let html = '';
+      for (let tier = 1; tier <= 3; tier++) {
+        const isPurchased = purchased.includes(tier);
+        const hintText = data.hints[tier];
+        const cost = costs[tier] || 0;
+
+        if (tier === 2 && !purchased.includes(1) && !isPurchased) {
+          html += `<button class="hint-btn" disabled style="opacity:0.4;cursor:not-allowed">T${tier} Hint (locked — buy T1 first)</button>`;
+        } else if (isPurchased && hintText) {
+          html += `<button class="hint-btn t${tier}" onclick="toggleHint(${tier})">${tier === 1 ? 'T1' : tier === 2 ? 'T2 (Amber)' : 'T3 (Near-Solution)'} — Purchased (click to show)</button>`;
+          html += `<div class="hint-content" id="hint-${tier}">${escapeHtml(hintText)}</div>`;
+        } else {
+          html += `<button class="hint-btn t${tier}" onclick="buyHint(${tier})">Buy T${tier} Hint (−${cost} pts)</button>`;
+        }
+      }
+      container.innerHTML = html;
+    }
+
+    function toggleHint(tier) {
+      const el = document.getElementById('hint-' + tier);
+      if (el) el.classList.toggle('visible');
+    }
+
+    function buyHint(tier) {
+      fetch('/platform/buy-hint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challenge_id: currentChallengeId, tier })
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.success) {
+            currentPurchasedHints.push(tier);
+            const el = document.getElementById('hint-' + tier);
+            if (el) { el.textContent = d.hint; el.classList.add('visible'); }
+            else {
+              fetch('/platform/challenge/' + currentChallengeId)
+                .then(r => r.json())
+                .then(data => renderHints(data, currentPurchasedHints));
+            }
+            showToast('Hint unlocked! −' + d.cost + ' pts');
+          } else {
+            alert(d.message || 'Could not purchase hint');
+          }
+        });
+    }
+
+    function submitFlag() {
+      const flagValue = document.getElementById('flag-input').value.trim();
+      const fi = document.getElementById('flag-input');
+      const fb = document.getElementById('flag-feedback');
+
+      fetch('/platform/submit-flag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flag: flagValue, challenge_id: currentChallengeId })
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.success) {
+            fi.classList.remove('wrong');
+            fi.classList.add('correct');
+            fb.textContent = d.message || '✓ Correct!';
+            fb.className = 'flag-feedback correct';
+            if (!d.already_solved) {
+              launchConfetti();
+              showSolveToast('+' + (d.points_earned || 0) + ' pts — ' + (d.challenge_code || ''));
+              // Mark card as solved
+              const card = document.querySelector(`.challenge-card[onclick*="${currentChallengeId}"]`);
+              if (card) {
+                card.classList.add('solved');
+                card.dataset.solved = 'true';
+                card.querySelector('.card-footer').innerHTML =
+                  '<span class="card-points">' + document.querySelector(`.challenge-card[onclick*="${currentChallengeId}"] .card-points`).textContent + '</span>' +
+                  '<span class="solved-badge">✓ Solved</span>';
+              }
+              // Reload page after short delay to update points
+              setTimeout(() => window.location.reload(), 2000);
+            }
+          } else {
+            fi.classList.remove('correct');
+            fi.classList.add('wrong');
+            fb.textContent = d.message || '✗ Incorrect flag.';
+            fb.className = 'flag-feedback wrong';
+            setTimeout(() => fi.classList.remove('wrong'), 600);
+          }
+        });
+    }
+
+    // Focus trap for slide-over
+    const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    function trapFocus(e) {
+      const panel = document.getElementById('slide-over');
+      if (!panel.classList.contains('open')) return;
+      const focusable = Array.from(panel.querySelectorAll(FOCUSABLE)).filter(el => !el.hidden);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.key === 'Tab') {
+        if (e.shiftKey) {
+          if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+        } else {
+          if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      }
+    }
+
+    let _slideOverTrigger = null;
+
+    function openSlideOver() {
+      // Store the element that triggered the open so we can restore focus on close
+      _slideOverTrigger = document.activeElement;
+      document.getElementById('slide-backdrop').classList.add('open');
+      const panel = document.getElementById('slide-over');
+      panel.classList.add('open');
+      // Move focus to first focusable element inside the panel
+      setTimeout(() => {
+        const focusable = panel.querySelectorAll(FOCUSABLE);
+        if (focusable.length) focusable[0].focus();
+      }, 50);
+    }
+
+    function closeSlideOver() {
+      document.getElementById('slide-backdrop').classList.remove('open');
+      document.getElementById('slide-over').classList.remove('open');
+      // Restore focus to the element that opened the panel
+      if (_slideOverTrigger && typeof _slideOverTrigger.focus === 'function') {
+        _slideOverTrigger.focus();
+        _slideOverTrigger = null;
+      }
+    }
+
+    // ESC key closes slide-over; Tab key trapped inside
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeSlideOver();
+      else if (e.key === 'Tab') trapFocus(e);
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function renderMd(md) {
+      if (!md) return '';
+      // Simple markdown rendering
+      return md
+        .replace(/##+ (.+)/g, '<h2>$1</h2>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/```([^`]*?)```/gs, '<pre><code>$1</code></pre>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/^(.+)$/, '<p>$1</p>');
+    }
+
+    // Auth modal
+    function openAuthModal(mode) {
+      authMode = mode || 'login';
+      document.getElementById('auth-modal-title').textContent = authMode === 'login' ? 'Sign In' : 'Create Account';
+      document.getElementById('auth-submit-btn').textContent = authMode === 'login' ? 'Sign In' : 'Register';
+      document.getElementById('auth-toggle-btn').textContent = authMode === 'login' ? 'Register instead' : 'Sign in instead';
+      document.getElementById('auth-modal').classList.add('open');
+      document.getElementById('auth-username').focus();
+    }
+
+    function closeAuthModal() { document.getElementById('auth-modal').classList.remove('open'); }
+
+    function toggleAuthMode() {
+      authMode = authMode === 'login' ? 'register' : 'login';
+      openAuthModal(authMode);
+    }
+
+    function doAuth() {
+      const username = document.getElementById('auth-username').value.trim();
+      const password = document.getElementById('auth-password').value;
+      if (!username || !password) return;
+
+      const endpoint = authMode === 'login' ? '/platform/auth/login' : '/platform/auth/register';
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.success) {
+            window.location.reload();
+          } else {
+            document.getElementById('auth-error').textContent = d.message || 'Authentication failed';
+          }
+        });
+    }
+
+    function logout() {
+      fetch('/platform/auth/logout', { method: 'POST' })
+        .then(() => window.location.reload());
+    }
+
+    // Confetti burst on correct flag solve
+    function launchConfetti() {
+      const colors = ['#E8A838', '#38C988', '#6088E8', '#E84B38', '#A860E8'];
+      const container = document.createElement('div');
+      container.className = 'confetti-container';
+      document.body.appendChild(container);
+      for (let i = 0; i < 60; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        const dur = 0.8 + Math.random() * 0.7;
+        piece.style.animationDuration = dur + 's';
+        piece.style.animationDelay = Math.random() * 0.3 + 's';
+        piece.style.width = (6 + Math.random() * 6) + 'px';
+        piece.style.height = (6 + Math.random() * 6) + 'px';
+        container.appendChild(piece);
+      }
+      setTimeout(() => container.remove(), 1500);
+    }
+
+    // Toast with upward float (already has CSS transition, enhance for solve)
+    function showSolveToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.style.transition = 'all 0.5s cubic-bezier(0.22, 1, 0.36, 1)';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    // MISSION-ALPHA prerequisite progress
+    // Prerequisites (challenge codes required before MISSION-ALPHA)
+    const MISSION_PREREQS = ['BL-03', 'BAC-02', 'AUTH-01'];
+    function updateMissionProgress() {
+      const cards = document.querySelectorAll('.challenge-card[data-track="mission"]');
+      if (!cards.length) return;
+      // Count how many prereqs the user has already solved
+      // We know solved challenges from the data-solved cards
+      const solvedCodes = new Set();
+      document.querySelectorAll('.challenge-card[data-solved="true"]').forEach(c => {
+        const titleEl = c.querySelector('.card-title');
+        if (titleEl) {
+          const code = titleEl.textContent.split(':')[0].trim();
+          solvedCodes.add(code);
+        }
+      });
+      const met = MISSION_PREREQS.filter(code => solvedCodes.has(code)).length;
+      const total = MISSION_PREREQS.length;
+      cards.forEach(card => {
+        const progressEl = card.querySelector('.mission-steps-label');
+        const fillEl = card.querySelector('.mission-progress-fill');
+        if (progressEl) progressEl.textContent = `Prerequisites: ${met}/${total} complete`;
+        if (fillEl) fillEl.style.width = (met / total * 100) + '%';
+      });
+    }
+    // Run on load
+    updateMissionProgress();
+  </script>
+</body>
+</html>
