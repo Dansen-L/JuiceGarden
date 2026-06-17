@@ -1,0 +1,1 @@
+"""Flask Challenge Platform package."""

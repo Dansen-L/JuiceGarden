@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "juice-garden"
+version = "1.0.0"
+description = "Juice Garden — Moderate-Difficulty Vulnerable Web Lab Platform CLI"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.1",
+    "rich>=13.0",
+    "docker>=7.0",
+]
+
+[project.scripts]
+garden = "garden.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["garden*"]
