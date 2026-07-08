@@ -39,8 +39,8 @@ Add to `/etc/hosts`:
 | Garden Fresh (Target App) | http://garden.lab:80/ |
 | Challenge Board | http://garden.lab:80/platform/ |
 | Exploit Server | http://garden.lab:80/platform/exploit-server/ |
-| CS-02 Attack Pages (cross-origin, same-site) | http://garden.lab:8081/payloads/\<id\> |
-| CS-03 Attack Pages (cross-site) | http://attacker.lab/payloads/\<id\> |
+| CS-02 Attack Pages (cross-origin, same-site) | http://garden.lab:8081/payloads/<id\> |
+| CS-03 Attack Pages (cross-site) | http://attacker.lab/payloads/<id\> |
 
 ## Challenge Tracks
 
