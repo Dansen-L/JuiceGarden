@@ -179,9 +179,3 @@ For cohort/concurrent deployments, reset between practitioner sessions:
 garden reset        # Regenerates all 23 flags; clears exploit-server collections
 garden reset --hard # Full reset including platform user progress (with prompt)
 ```
-
-## Development
-
-See `feature_list.json` for the complete test specification (275 tests).
-
-Built with Claude Code.
