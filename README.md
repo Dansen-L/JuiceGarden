@@ -179,4 +179,3 @@ For cohort/concurrent deployments, reset between practitioner sessions:
 garden reset        # Regenerates all 23 flags; clears exploit-server collections
 garden reset --hard # Full reset including platform user progress (with prompt)
 ```
-
